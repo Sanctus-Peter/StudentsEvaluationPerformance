@@ -78,7 +78,7 @@ async def get_user_profile(
     if member.strip() == "student":
         ret_val["Designation"] = "Student"
         students = db.query(models.Students).filter(
-            (models.Students.lastname == name.strip().split(" ")[0]) and (models.Students.student_class == member_class)
+            (models.Students.student_class == member_class) and (models.Students.lastname == name.strip().split(" ")[0])
         ).first()
 
         if not students:
@@ -90,7 +90,7 @@ async def get_user_profile(
     elif member.strip() == "teacher":
         ret_val["Designation"] = "Teacher"
         teachers = db.query(models.Teacher).filter(
-            (models.Teacher.name == name.strip()) and (models.Teacher.class_taught == member_class)
+            (models.Teacher.class_taught == member_class) and (models.Teacher.name == name.strip())
         ).first()
 
         if not teachers:
@@ -100,4 +100,3 @@ async def get_user_profile(
             ret_val[k] = v
 
     return ret_val
-

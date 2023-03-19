@@ -53,7 +53,7 @@ class StudentsUpdate(BaseModel):
 
 class Students(StudentsBase):
     id: int
-    studentID: str
+    student_id: str
     student_class: Classes
 
     class Config:
@@ -101,7 +101,7 @@ class TeacherUpdate(BaseModel):
 
 class Teacher(TeacherBase):
     id: int
-    class_taught: Optional[Classes]
+    class_taught: Optional[str]
 
     class Config:
         orm_mode = True

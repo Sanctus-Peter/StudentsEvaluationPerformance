@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import schemas, database, models, utils, oauth2
@@ -15,8 +13,11 @@ async def create_teacher(
 ):
     hashed_pwd = utils.hashed(user.password)
     user.password = hashed_pwd
+    sub_taught = user.subject_taught
+    del user.subject_taught
     new_user = models.Teacher(**user.dict())
     db.add(new_user)
+    db.commit()
 
     if user.class_taught:
         db.query(models.Students).filter(
@@ -24,7 +25,22 @@ async def create_teacher(
         ).update({"teacher_id": new_user.id}, synchronize_session=False)
         db.commit()
 
-    db.commit()
+    if sub_taught:
+        for subject in sub_taught:
+            subject_found = db.query(models.Subjects).filter(models.Subjects.subject == subject).first()
+            if not subject_found:
+                new_subject = models.Subjects(**{"subject": subject})
+                db.add(new_subject)
+                db.commit()
+
+                new_teacher_subject = models.TeacherSubject(**{"teacher_id": new_user.id, "subject_id": new_subject.id})
+                db.add(new_teacher_subject)
+                db.commit()
+            else:
+                new_teacher_subject = models.TeacherSubject(**{"teacher_id": new_user.id, "subject_id": subject_found.id})
+                db.add(new_teacher_subject)
+                db.commit()
+
     db.refresh(new_user)
 
     return new_user

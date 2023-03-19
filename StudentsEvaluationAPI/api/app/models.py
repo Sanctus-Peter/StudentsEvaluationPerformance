@@ -61,7 +61,7 @@ class Teacher(Base):
         "Students", back_populates="teacher", cascade="all, delete", passive_deletes=True
     )
     teacher_subject = relationship(
-        "TeacherSubject", back_populates="student", cascade="all, delete", passive_deletes=True
+        "TeacherSubject", back_populates="teacher", cascade="all, delete", passive_deletes=True
     )
 
 
@@ -92,14 +92,15 @@ class News(Base):
 class Result(Base):
     __tablename__ = 'results'
     id = Column(Integer, primary_key=True, nullable=False)
-    student_subject_id = Column(Integer, ForeignKey('subjects.id', ondelete="CASCADE"), nullable=False)
+    student_subject_id = Column(Integer, ForeignKey('student_subjects.id', ondelete="CASCADE"), nullable=False)
+    teacher_subject_id = Column(Integer, ForeignKey('teacher_subjects.id', ondelete="CASCADE"), nullable=False)
     c_a_score = Column(Integer, nullable=False)
     exam_score = Column(Integer, nullable=False)
     term = Column(String, nullable=False)
     year = Column(String, nullable=False)
 
-    student_subject = relationship("Subjects", back_populates="result")
-    teacher_subject = relationship("Subjects", back_populates="result")
+    student_subject = relationship("StudentSubject", back_populates="result")
+    teacher_subject = relationship("TeacherSubject", back_populates="result")
 
 
 class StudentSubject(Base):
@@ -108,7 +109,7 @@ class StudentSubject(Base):
     student_id = Column(Integer, ForeignKey('students.id', ondelete="CASCADE"), nullable=False)
     subject_id = Column(Integer, ForeignKey('subjects.id', ondelete="CASCADE"), nullable=False)
 
-    student = relationship("Students", back_populates="subject_subject")
+    student = relationship("Students", back_populates="student_subject")
     subject = relationship("Subjects", back_populates="student_subject")
     result = relationship(
         "Result", back_populates="student_subject", cascade="all, delete", passive_deletes=True

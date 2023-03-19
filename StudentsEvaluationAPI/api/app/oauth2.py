@@ -9,8 +9,8 @@ from .config import settings
 
 admin_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/administrator/sign-in")
 parent_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/guardian/sign-in")
+teacher_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/administrator/sign-in")
 student_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/student/sign-in")
-teacher_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/teacher/sign-in")
 
 
 SECRET_KEY = settings.secret_key
@@ -68,6 +68,20 @@ def get_admin_user(
         )
     return user
 
+def get_teacher(
+        token: str = Depends(teacher_oauth2_scheme),
+        db: Session = Depends(database.get_db)
+):
+    token = verify_tok(token, credentials_exception)
+    user = db.query(models.Teacher).filter(models.Teacher.id == token.id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are not authorized to execute this action"
+        )
+    return user
+
+
 def get_guardian(
         token: str = Depends(parent_oauth2_scheme),
         db: Session = Depends(database.get_db)
@@ -81,15 +95,4 @@ def get_guardian(
         )
     return user
 
-def get_teacher(
-        token: str = Depends(teacher_oauth2_scheme),
-        db: Session = Depends(database.get_db)
-):
-    token = verify_tok(token, credentials_exception)
-    user = db.query(models.Teacher).filter(models.Teacher.id == token.id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You are not authorized to execute this action"
-        )
-    return user
+
