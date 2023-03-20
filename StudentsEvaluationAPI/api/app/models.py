@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 from .database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text, ForeignKey
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text, ForeignKey, Float
 
 
 class Students(Base):
@@ -94,10 +94,11 @@ class Result(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     student_subject_id = Column(Integer, ForeignKey('student_subjects.id', ondelete="CASCADE"), nullable=False)
     teacher_subject_id = Column(Integer, ForeignKey('teacher_subjects.id', ondelete="CASCADE"), nullable=False)
-    c_a_score = Column(Integer, nullable=False)
-    exam_score = Column(Integer, nullable=False)
+    c_a_score = Column(Float, nullable=False)
+    exam_score = Column(Float, nullable=False)
     term = Column(String, nullable=False)
-    year = Column(String, nullable=False)
+    session = Column(String, nullable=False)
+    time_logged = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("NOW()"))
 
     student_subject = relationship("StudentSubject", back_populates="result")
     teacher_subject = relationship("TeacherSubject", back_populates="result")
@@ -106,7 +107,7 @@ class Result(Base):
 class StudentSubject(Base):
     __tablename__ = 'student_subjects'
     id = Column(Integer, primary_key=True, nullable=False)
-    student_id = Column(Integer, ForeignKey('students.id', ondelete="CASCADE"), nullable=False)
+    student_id = Column(String, ForeignKey('students.student_id', ondelete="CASCADE"), nullable=False)
     subject_id = Column(Integer, ForeignKey('subjects.id', ondelete="CASCADE"), nullable=False)
 
     student = relationship("Students", back_populates="student_subject")

@@ -57,4 +57,4 @@ def generate_suffix():
 def generate_registration_number():
     suffix = generate_suffix()
     year = datetime.now().year % 100
-    return f"STU/{year}/{suffix}"
+    return f"STU{year}{suffix}"

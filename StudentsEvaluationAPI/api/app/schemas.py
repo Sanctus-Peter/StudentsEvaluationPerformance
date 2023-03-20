@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, validator
-from StudentsEvaluationAPI import __SUBJECT_LISTS__, __CLASSES__
+from StudentsEvaluationAPI import __SUBJECT_LISTS__, __CLASSES__, __TERM__
 from fastapi import HTTPException, status
 
 
@@ -12,6 +12,17 @@ class Subject(str):
         if value not in cls.__subject_list__:
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=f"{value} is not a valid subject"
+            )
+        return str.__new__(cls, value)
+
+
+class Term(str):
+    __term_list__ = __TERM__
+
+    def __new__(cls, value):
+        if value not in cls.__term_list__:
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=f"{value} is not a valid term"
             )
         return str.__new__(cls, value)
 
@@ -27,6 +38,15 @@ class Classes(str):
         return str.__new__(cls, value)
 
 
+class PostGrade(BaseModel):
+    student_id: str
+    c_a_score: Optional[float] = 0.0
+    exam_score: Optional[float] = 0.0
+
+class Session(BaseModel):
+    session: str
+    term: Term
+
 class StudentsBase(BaseModel):
     firstname: str
     lastname: str
@@ -39,6 +59,7 @@ class StudentsCreate(StudentsBase):
     gender: str
     address: str
     student_class: Classes
+    department: Optional[str]
 
 
 class StudentsUpdate(BaseModel):
@@ -55,10 +76,19 @@ class Students(StudentsBase):
     id: int
     student_id: str
     student_class: Classes
+    department: Optional[str]
 
     class Config:
         orm_mode = True
 
+
+class StudentSubject(BaseModel):
+    lastname: str
+    firstname: str
+    student_id: str
+
+    class Config:
+        orm_mode = True
 
 class Member(BaseModel):
     id: int
@@ -207,3 +237,7 @@ class News(PostNews):
 
     class Config:
         orm_mode = True
+
+
+class SubjectCreate(BaseModel):
+    subjects: list[Subject]

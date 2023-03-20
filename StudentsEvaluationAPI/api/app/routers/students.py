@@ -56,5 +56,3 @@ async def change_password(
     db.commit()
     db.refresh(user)
     return {"message": "Password updated successfully"}
-
-

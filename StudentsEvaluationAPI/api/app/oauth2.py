@@ -9,7 +9,7 @@ from .config import settings
 
 admin_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/administrator/sign-in")
 parent_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/guardian/sign-in")
-teacher_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/administrator/sign-in")
+teacher_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/teacher/sign-in")
 student_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/student/sign-in")
 
 

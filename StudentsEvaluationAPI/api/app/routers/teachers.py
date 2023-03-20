@@ -1,7 +1,8 @@
 from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from .. import schemas, database, models, utils, oauth2
-
+from StudentsEvaluationAPI import __CLASSES__, __SUBJECT_LISTS__
+from ..schemas import Subject, Term, Classes
 
 router = APIRouter(tags=["Teachers"], prefix="/teacher")
 
@@ -42,7 +43,6 @@ async def create_teacher(
                 db.commit()
 
     db.refresh(new_user)
-
     return new_user
 
 @router.delete("/{userID}", status_code=status.HTTP_204_NO_CONTENT)
@@ -73,3 +73,81 @@ async def change_password(
 @router.get("/all-students", response_model=list[schemas.Students])
 async def get_all_students(db: Session = Depends(database.get_db), user: models.Teacher = Depends(oauth2.get_teacher)):
     return db.query(models.Students).filter(models.Students.teacher_id == user.id).all()
+
+
+@router.post("/register-subject/{student_class}/{studentID}", status_code=status.HTTP_201_CREATED)
+async def register_subjects(
+        studentID: str, student_class: str, subjects: schemas.SubjectCreate,
+        user: models.Teacher = Depends(oauth2.get_teacher),
+        db: Session = Depends(database.get_db)
+):
+    if user.class_taught != student_class:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized to perform this function")
+
+    for subject in subjects.subjects:
+        subject_found = db.query(models.Subjects).filter(models.Subjects.subject == subject).first()
+
+        new_student_subject = models.StudentSubject(**{"student_id": studentID, "subject_id": subject_found.id})
+        db.add(new_student_subject)
+        db.commit()
+
+@router.get("/get-classes", response_model=list[str])
+async def get_all_classes(role: str = Depends(oauth2.get_teacher)):
+    return __CLASSES__
+
+@router.get("/get-subjects", response_model=list[str])
+async def get_all_subjects(role: str = Depends(oauth2.get_teacher)):
+    return __SUBJECT_LISTS__
+
+@router.get("/{subject}/{student_class}/all-students", response_model=list[schemas.StudentSubject])
+async def get_all_students_by_subject(
+        subject: Subject, student_class: Classes,
+        role: str = Depends(oauth2.get_teacher), db: Session = Depends(database.get_db)
+):
+    return db.query(models.Students).join(
+        models.StudentSubject
+    ).join(models.Subjects).filter(
+        models.Subjects.subject == subject, models.Students.student_class == student_class
+    ).all()
+
+@router.post("/grades/{session:path}/{term}/{student_class}/{subject}")
+async def post_grades(
+        subject: Subject, student_class: str, term: Term, session: str,
+        student_score: list[schemas.PostGrade],
+        user: models.Teacher = Depends(oauth2.get_teacher),
+        db: Session = Depends(database.get_db)
+):
+    teacherSubject = db.query(models.TeacherSubject).join(
+        models.Subjects
+    ).filter(
+        models.TeacherSubject.teacher_id == user.id, models.Subjects.subject == subject
+    ).first()
+    if not teacherSubject:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update score for a subject you are teaching"
+        )
+
+    for studentEntry in student_score:
+        studentSubject = db.query(models.StudentSubject).join(
+            models.Subjects
+        ).filter(
+            models.StudentSubject.student_id == studentEntry.student_id, models.Subjects.subject == subject
+        ).first()
+        if not studentSubject:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update score for a student taking your subject"
+            )
+        new_student_result = models.Result(
+            **{
+                "teacher_subject_id": teacherSubject.id,
+                "student_subject_id": studentSubject.id,
+                "c_a_score": studentEntry.c_a_score,
+                "exam_score": studentEntry.exam_score,
+                "term": term,
+                "session": session
+            }
+        )
+        db.add(new_student_result)
+        db.commit()

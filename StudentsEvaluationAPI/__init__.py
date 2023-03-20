@@ -13,3 +13,5 @@ __SUBJECT_LISTS__ = [
     'Technical Drawing', 'Food and Nutrition', 'Music', 'Visual Arts', 'Financial Accounting',
     'Further Mathematics', 'Geography', 'Biology', 'Economics', 'Physics', 'Chemistry'
 ]
+
+__TERM__ = ["1st Term", "2nd Term", "3rd Term"]
