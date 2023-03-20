@@ -38,6 +38,15 @@ class Classes(str):
         return str.__new__(cls, value)
 
 
+class Results(BaseModel):
+    subject: str
+    c_a_score: Optional[float] = 0.0
+    exam_score: Optional[float] = 0.0
+
+    class Config:
+        orm_mode = True
+
+
 class PostGrade(BaseModel):
     student_id: str
     c_a_score: Optional[float] = 0.0

@@ -151,3 +151,36 @@ async def post_grades(
         )
         db.add(new_student_result)
         db.commit()
+
+    return {"message": "Scores updated successfully"}
+
+@router.get("/grades/{session:path}/{term}/{student_class}/{studentID}", response_model=list[schemas.Results])
+async def get_grades(
+        studentID: str, student_class: str, term: Term, session: str,
+        user: models.Teacher = Depends(oauth2.get_teacher),
+        db: Session = Depends(database.get_db)
+):
+    student_found = db.query(models.Students).filter(models.Students.student_id == studentID).first()
+    if not student_found:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Student not found")
+
+    if student_found.student_class != user.class_taught:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view score for a student in your class"
+        )
+
+    query = db.query(models.Result, models.Subjects.subject).join(
+        models.StudentSubject, models.Result.student_subject_id == models.StudentSubject.id
+    ).join(
+        models.Subjects, models.StudentSubject.subject_id == models.Subjects.id
+    ).filter(
+        models.StudentSubject.student_id == studentID, models.Result.term == term, models.Result.session == session
+    ).all()
+
+    retVal = []
+    for result, subject in query:
+        result.subject = subject
+        retVal.append(result)
+
+    return retVal
